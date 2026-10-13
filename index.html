@@ -50,40 +50,37 @@
         <img src="aichi_rail1.svg" alt="愛知県鉄道路線" class="map-overlay" id="rail-overlay">
     </div>
 
-    <script>
-        // 定期的にステータスを確認する関数（例：5分おきに status.json をチェック）
-        async function checkTrainStatus() {
-            try {
-                // ※実際にはバックエンドで生成したJSONファイルを読み込みます
-                // const response = await fetch('status.json');
-                // const data = await response.json();
+<script>
+    async function fetchTrainStatus() {
+        try {
+            // キャッシュを無視して最新の status.json を取得
+            const response = await fetch('status.json?t=' + new Date().getTime());
+            const data = await response.json();
 
-                // 【シミュレーション用】仮に異常が発生したと仮定した動き
-                const isNormal = true; // 平常なら true, 異常なら false
+            const railOverlay = document.getElementById('rail-overlay'); // 点滅させる鉄道路線画像
+            const alertBox = document.getElementById('alert-box');       // 警告テキストを表示する枠
 
-                const overlay = document.getElementById('rail-overlay');
-                const alertBox = document.getElementById('alert-box');
-                const alertMsg = document.getElementById('alert-message');
-
-                if (!isNormal) {
-                    // 異常時の処理：路線を点滅させ、リンク付きテキストを表示
-                    overlay.classList.add('is-alert');
+            if (data.zairaisen === "delay") {
+                // 異常時の処理
+                if (railOverlay) railOverlay.classList.add('is-alert'); // 点滅クラスを追加
+                if (alertBox) {
                     alertBox.style.display = 'block';
-                    alertMsg.innerHTML = 'JR東海在来線で遅延が発生しています。<br>' +
-                        '<a href="https://traininfo.jr-central.co.jp/zairaisen/index.html?lang=ja" target="_blank" style="color: #991b1b; font-weight: bold;">👉 JR東海 運行情報（公式サイト）で詳細を確認</a>';
-                } else {
-                    // 平常時の処理：点滅を消し、アラートを隠す
-                    overlay.classList.remove('is-alert');
-                    alertBox.style.display = 'none';
+                    alertBox.innerHTML = '⚠️ <strong>JR東海 在来線に運行情報の乱れがあります</strong><br>' +
+                        '<a href="https://traininfo.jr-central.co.jp/zairaisen/index.html?lang=ja" target="_blank" style="color: #991b1b; font-weight: bold; text-decoration: underline;">👉 JR東海 公式運行情報で詳細を確認する</a>';
                 }
-            } catch (e) {
-                console.log('ステータス取得失敗', e);
+            } else {
+                // 平常時の処理
+                if (railOverlay) railOverlay.classList.remove('is-alert');
+                if (alertBox) alertBox.style.display = 'none';
             }
+        } catch (error) {
+            console.error("ステータスの取得に失敗しました", error);
         }
+    }
 
-        // ページ読み込み時に実行 ＆ 以後定期実行
-        checkTrainStatus();
-        setInterval(checkTrainStatus, 5 * 60 * 1000); // 5分ごとにチェック
-    </script>
+    // ページ読み込み時に実行 ＆ 以後3分おきに自動チェック
+    fetchTrainStatus();
+    setInterval(fetchTrainStatus, 3 * 60 * 1000);
+</script>
 </body>
 </html>
