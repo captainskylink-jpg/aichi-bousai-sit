@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>愛知県 交通・防災ポータル（自動監視連動）</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin: 0; padding: 20px; background-color: #f8fafc; }
+        .map-container { position: relative; width: 100%; max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .map-base { width: 100%; height: auto; display: block; }
+        .map-overlay { position: absolute; top: 0; left: 0; width: 100%; height: auto; pointer-events: none; display: none; } /* 平時は非表示 */
+        
+        /* 異常時に付与する点滅クラス */
+        .is-alert {
+            display: block !important;
+            animation: pulse-blink 2s infinite ease-in-out;
+        }
+        @keyframes pulse-blink {
+            0% { opacity: 1.0; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1.0; }
+        }
+
+        /* 異常時のアラート・リンク表示エリア */
+        #alert-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #991b1b;
+            display: none; /* 平時は隠す */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>愛知県 交通・防災ポータル</h1>
+    <p class="status">JR東海 在来線の運行状況を監視中（15分おき）</p>
+
+    <!-- 異常時にのみテキストと公式リンクを表示するエリア -->
+    <div id="alert-box">
+        <strong>⚠️ 運行情報に乱れがあります</strong>
+        <p id="alert-message"></p>
+    </div>
+
+    <div class="map-container">
+        <img src="aichi_base.svg" alt="愛知県白地図" class="map-base">
+        <!-- 異常時のみ「is-alert」クラスがついて赤く点滅するオーバーレイ -->
+        <img src="aichi_rail1.svg" alt="愛知県鉄道路線" class="map-overlay" id="rail-overlay">
+    </div>
+
+    <script>
+        // 定期的にステータスを確認する関数（例：5分おきに status.json をチェック）
+        async function checkTrainStatus() {
+            try {
+                // ※実際にはバックエンドで生成したJSONファイルを読み込みます
+                // const response = await fetch('status.json');
+                // const data = await response.json();
+
+                // 【シミュレーション用】仮に異常が発生したと仮定した動き
+                const isNormal = true; // 平常なら true, 異常なら false
+
+                const overlay = document.getElementById('rail-overlay');
+                const alertBox = document.getElementById('alert-box');
+                const alertMsg = document.getElementById('alert-message');
+
+                if (!isNormal) {
+                    // 異常時の処理：路線を点滅させ、リンク付きテキストを表示
+                    overlay.classList.add('is-alert');
+                    alertBox.style.display = 'block';
+                    alertMsg.innerHTML = 'JR東海在来線で遅延が発生しています。<br>' +
+                        '<a href="https://traininfo.jr-central.co.jp/zairaisen/index.html?lang=ja" target="_blank" style="color: #991b1b; font-weight: bold;">👉 JR東海 運行情報（公式サイト）で詳細を確認</a>';
+                } else {
+                    // 平常時の処理：点滅を消し、アラートを隠す
+                    overlay.classList.remove('is-alert');
+                    alertBox.style.display = 'none';
+                }
+            } catch (e) {
+                console.log('ステータス取得失敗', e);
+            }
+        }
+
+        // ページ読み込み時に実行 ＆ 以後定期実行
+        checkTrainStatus();
+        setInterval(checkTrainStatus, 5 * 60 * 1000); // 5分ごとにチェック
+    </script>
+</body>
+</html>
